@@ -1,67 +1,79 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
- 
-public class wepScript : MonoBehaviour {
- 
-        public Camera fpsCam;
-        public GameObject hitPar;
-        public int damage = 30;
-        public int range = 10000;
-        public int ammo = 10;
-        public int clipSize = 10;
-        public int clipCount = 5;
- 
-        public Animation am;
-        public AnimationClip shoot;
-        public AnimationClip reloadA;
- 
- 
- 
- 
-        void Update(){
-                if (Input.GetMouseButton (0)) {
-                        fireShot ();
-                }
- 
-                if (Input.GetKeyDown (KeyCode.R)) {
-                        reload();
-                }
-        }
- 
-        public void fireShot(){
-                if (!am.IsPlaying (reloadA.name) && ammo >= 1) {
-                        if(!am.IsPlaying (shoot.name)){
-                                am.CrossFade (shoot.name);
-                                ammo = ammo - 1;
- 
-                                RaycastHit hit;
-                                Ray ray = fpsCam.ScreenPointToRay (new Vector3 (Screen.width / 2, Screen.height / 2, 0));
-               
-                                if (Physics.Raycast (ray, out hit, range)) {
-                                        if (hit.transform.tag == "Player") {
-                                                hit.transform.GetComponent<PhotonView> ().RPC ("applyDamage", PhotonTargets.AllBuffered, damage);
-                                        }
-                                        GameObject particleClone;
-                                        particleClone = PhotonNetwork.Instantiate (hitPar.name, hit.point, Quaternion.LookRotation (hit.normal), 0) as GameObject;
-                                        Destroy (particleClone, 2);
-                                        Debug.Log (hit.transform.name);
-                       
-                                }
-                        }
-       
-                }
-        }
- 
-        public void reload(){
-                if (clipCount >= 1) {
-                        am.CrossFade (reloadA.name);
-                        ammo = clipSize;
-                        clipCount = clipCount - 1;
-                }
- 
-        }
- 
-        void OnGUI(){
-                GUI.Box (new Rect(110,10,150,30), "Ammo: " + ammo + "/" + clipSize + "/" + clipCount);
-        }
+
+public class WepScript : MonoBehaviour
+{
+	public GameObject enemy;
+	public Rigidbody projectile;
+	public float speed = 40f;
+	public float shootDelay = 0.5f;
+	public int magazineSize = 3;
+	public int currRounds = 3;
+	public int totalAmmo = 90;
+	public float timeAlive = 2f;
+	public float gunSpread = 20f;
+	public float tilt = 1f;
+	public float reloadTime = 1f;
+	private float counter = 0.0f;
+	private bool reloading = false;
+
+	// Update is called once per frame
+	void Update ()
+	{
+		if (!reloading && Input.GetButton ("Fire1") && counter > shootDelay && currRounds > 0) {
+			ShottyBullet ();
+			currRounds -= 1;
+			counter = 0;
+		} else if (Input.GetButtonDown ("Reload"))
+		{	
+			reloading = true;
+			Invoke("Reload", reloadTime);
+		}
+		Debug.Log (currRounds);
+		counter += Time.deltaTime;
+	}
+
+	void Reload ()
+	{
+		int difference = magazineSize - currRounds;
+		if (totalAmmo - difference >= 0) {
+			currRounds += difference;
+			totalAmmo -= difference;
+		} else if (totalAmmo - difference < 0) {
+			currRounds = totalAmmo;
+			totalAmmo = 0;
+		}
+		Debug.Log ("Total: " + totalAmmo);
+		reloading = false;
+	}
+
+	void ShottyBullet ()
+	{
+		Debug.Log (transform.position + "   " + transform.rotation);
+
+		Vector3 toZero = transform.TransformPoint (0, -0.3f, 1f);
+		Vector3 toRight = transform.TransformPoint (0.1f, -0.3f, 1f);
+		Vector3 toLeft = transform.TransformPoint (-0.1f, -0.3f, 1f);
+
+		float zRightBullet = speed * Mathf.Cos(gunSpread * (Mathf.PI/180));
+		float xRightBullet = speed * Mathf.Sin(gunSpread * (Mathf.PI/180));
+
+
+		//var diagonalSpeed = Mathf.Pow(((speed * speed)/ 2), (0.5f));
+
+		Rigidbody instantiatedProjectile = Instantiate (projectile, toZero, transform.rotation)as Rigidbody;
+		instantiatedProjectile.velocity = transform.TransformDirection (new Vector3 (0, tilt, speed));
+
+		Rigidbody instantiatedProjectileRight = Instantiate (projectile, toRight, transform.rotation)as Rigidbody;
+		instantiatedProjectileRight.velocity = transform.TransformDirection (new Vector3 (xRightBullet, tilt, zRightBullet));
+
+		Rigidbody instantiatedProjectileLeft = Instantiate (projectile, toLeft, transform.rotation)as Rigidbody;
+		instantiatedProjectileLeft.velocity = transform.TransformDirection (new Vector3 (-xRightBullet, tilt, zRightBullet));
+
+		Destroy (instantiatedProjectile.gameObject, timeAlive);
+		Destroy (instantiatedProjectileRight.gameObject, timeAlive);
+		Destroy (instantiatedProjectileLeft.gameObject, timeAlive);
+
+
+	}
 }
