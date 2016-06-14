@@ -31,7 +31,7 @@ public class GlowOn : MonoBehaviour {
 	}
 
 	void OnCollisionEnter (Collision col){
-		if (col.gameObject.tag == "Projectile") {
+		if (col.gameObject.tag == "Test") {
 			lightOn *= -1;
 			timeCounter = 0;
 		} else if (col.gameObject.tag == "Player") {
