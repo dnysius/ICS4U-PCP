@@ -11,6 +11,8 @@ public class GlowOn : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
+	    //this is some new code, testing git
+
 	}
 
 	void Update() {
