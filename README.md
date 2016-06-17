@@ -16,7 +16,7 @@ A PC or mac
 Executable project file, IDE capable of opening up C# documents. Microsoft's Visual Studio is recommended. 
 
 ## Install and Set Up
-Download everything from the dropbox link provided
+Download everything from the dropbox link provided and run test.exe 
 
 
 
